@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>fircl — Your fan circle. Every game.</title>
+  <meta name="description" content="Watch live games with your crew in real-time chat threads. NFL, NBA, MLB, NHL, MLS." />
+  <meta name="theme-color" content="#0F1923" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta property="og:title" content="fircl — Your fan circle. Every game." />
+  <meta property="og:description" content="Watch live games with your crew in real-time chat threads." />
+  <meta property="og:url" content="https://fircl.app" />
+  <meta property="og:image" content="https://fircl.app/og-image.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --night:   #0F1923;
+      --navy:    #1B3A6B;
+      --orange:  #FF6B35;
+      --chalk:   #F7F3EE;
+      --teal:    #4ECDC4;
+      --yellow:  #FFD23F;
+      --muted:   rgba(247,243,238,0.5);
+      --border:  rgba(27,58,107,0.4);
+      --card:    rgba(27,58,107,0.2);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--night);
+      color: var(--chalk);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    /* ── App shell ── */
+    #shell {
+      max-width: 480px;
+      margin: 0 auto;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      background: var(--night);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    /* ── Views ── */
+    .view {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .view.active { display: flex; }
+
+    .view-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 0.5px solid var(--border);
+      background: var(--night);
+      flex-shrink: 0;
+    }
+    .navbar-title { font-size: 20px; font-weight: 700; color: var(--chalk); }
+    .navbar-wordmark { font-size: 22px; font-weight: 800; color: var(--orange); letter-spacing: 2px; }
+    .navbar-action { font-size: 14px; color: var(--orange); background: none; border: none; cursor: pointer; padding: 4px; }
+
+    /* ── Bottom nav ── */
+    #bottom-nav {
+      display: none;
+      flex-direction: row;
+      background: var(--night);
+      border-top: 0.5px solid var(--border);
+      flex-shrink: 0;
+      padding-bottom: env(safe-area-inset-bottom, 8px);
+    }
+    #bottom-nav.visible { display: flex; }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 10px 0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 10px;
+      transition: color 0.15s;
+    }
+    .nav-item.active { color: var(--orange); font-weight: 600; }
+    .nav-icon { font-size: 20px; line-height: 1; }
+
+    /* ── Landing page ── */
+    #landing {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px 64px;
+      text-align: center;
+      overflow-y: auto;
+    }
+    #landing.active { display: flex; }
+
+    .landing-logo {
+      width: 80px; height: 80px;
+      margin-bottom: 20px;
+      animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { filter: drop-shadow(0 0 12px rgba(255,107,53,0.4)); }
+      50%      { filter: drop-shadow(0 0 28px rgba(255,107,53,0.7)); }
+    }
+    .landing-wordmark { font-size: 64px; font-weight: 800; letter-spacing: 6px; color: var(--orange); margin-bottom: 12px; }
+    .landing-tagline  { font-size: 20px; font-weight: 500; color: var(--chalk); margin-bottom: 8px; }
+    .landing-sub      { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 320px; margin-bottom: 40px; }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 380px;
+      margin-bottom: 40px;
+    }
+    .feature-card {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .feature-emoji { font-size: 28px; margin-bottom: 8px; display: block; }
+    .feature-title { font-size: 13px; font-weight: 600; color: var(--chalk); margin-bottom: 4px; }
+    .feature-desc  { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+    .landing-cta {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 320px;
+    }
+    .btn-primary {
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      width: 100%;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--chalk);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 13px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .btn-secondary:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* ── Auth screen ── */
+    #auth-screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 40px 24px;
+      overflow-y: auto;
+    }
+    #auth-screen.active { display: flex; }
+    .auth-back { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; margin-bottom: 32px; text-align: left; }
+    .auth-title { font-size: 28px; font-weight: 700; color: var(--chalk); margin-bottom: 6px; }
+    .auth-sub   { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+    .auth-tabs  { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 28px; }
+    .auth-tab   { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+    .auth-tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .form-input {
+      width: 100%;
+      background: rgba(247,243,238,0.06);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      color: var(--chalk);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--orange); }
+    .form-input::placeholder { color: var(--muted); }
+    .form-error { color: var(--orange); font-size: 13px; margin-top: 8px; }
+    .form-success { color: var(--teal); font-size: 13px; margin-top: 8px; }
+
+    /* ── Game cards ── */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 16px 8px;
+    }
+    .section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .section-action { font-size: 12px; color: var(--orange); background: none; border: none; cursor: pointer; }
+
+    .games-scroll {
+      display: flex;
+      gap: 12px;
+      padding: 0 16px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .games-scroll::-webkit-scrollbar { display: none; }
+
+    .game-card {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      min-width: 160px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+    }
+    .game-card:hover { border-color: rgba(255,107,53,0.4); }
+    .game-card-time { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .game-card-teams { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .game-card-team { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+    .game-card-logo { width: 36px; height: 36px; object-fit: contain; }
+    .game-card-logo-fallback { font-size: 28px; line-height: 1; }
+    .game-card-abbr { font-size: 11px; color: var(--muted); }
+    .game-card-score { font-size: 28px; font-weight: 700; color: var(--chalk); }
+    .game-card-vs { font-size: 11px; color: var(--muted); }
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--orange);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .live-dot { width: 5px; height: 5px; background: #fff; border-radius: 50%; animation: blink 1.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .final-badge { background: #444; }
+    .upcoming-badge { background: var(--navy); }
+
+    /* ── Thread list ── */
+    .thread-list { padding: 0 16px; }
+    .thread-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 0.5px solid var(--border);
+      cursor: pointer;
+    }
+    .thread-item:hover .thread-title { color: var(--orange); }
+    .thread-logos { position: relative; width: 48px; height: 36px; flex-shrink: 0; }
+    .thread-logo { width: 28px; height: 28px; object-fit: contain; position: absolute; }
+    .thread-logo.home { bottom: 0; left: 0; }
+    .thread-logo.away { top: 0; right: 0; }
+    .thread-logo-fallback { font-size: 20px; position: absolute; }
+    .thread-info { flex: 1; }
+    .thread-title { font-size: 15px; font-weight: 600; color: var(--chalk); margin-bottom: 3px; }
+    .thread-sub   { font-size: 12px; color: var(--muted); }
+    .thread-sport-badge {
+      font-size: 10px;
+      color: var(--orange);
+      background: rgba(255,107,53,0.12);
+      border-radius: 6px;
+      padding: 2px 7px;
+      margin-left: 6px;
+    }
+    .thread-time { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+
+    /* ── Game Thread view ── */
+    #view-game {
+      position: absolute;
+      inset: 0;
+      background: var(--night);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+    }
+    #view-game.active { display: flex; }
+
+    .scoreboard {
+      background: #1a1a2e;
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+    .scoreboard-status { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+    .scoreboard-clock { font-size: 12px; color: #aaa; }
+    .scoreboard-teams { display: flex; align-items: center; justify-content: space-between; }
+    .sb-team { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .sb-logo { width: 44px; height: 44px; object-fit: contain; }
+    .sb-logo-fallback { font-size: 32px; }
+    .sb-name  { font-size: 12px; color: #ccc; }
+    .sb-score { font-size: 36px; font-weight: 700; color: #fff; }
+    .sb-vs    { font-size: 16px; color: #555; }
+    .sb-info  { font-size: 11px; color: #aaa; text-align: center; margin-top: 6px; }
+
+    .crew-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 12px;
+      border-bottom: 0.5px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+    }
+    .crew-tabs::-webkit-scrollbar { display: none; }
+    .crew-tab {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .crew-tab.active { color: var(--orange); border-bottom-color: var(--orange); font-weight: 500; }
+    .crew-tab-dot { width: 6px; height: 6px; border-radius: 50%; background: #555; }
+    .crew-tab.active .crew-tab-dot { background: var(--orange); }
+    .crew-tab-count {
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(247,243,238,0.08);
+      padding: 1px 5px;
+      border-radius: 8px;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .message { display: flex; gap: 9px; }
+    .msg-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .msg-body { flex: 1; }
+    .msg-header { display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px; }
+    .msg-user { font-size: 13px; font-weight: 600; color: var(--chalk); }
+    .msg-time { font-size: 11px; color: var(--muted); }
+    .msg-text { font-size: 14px; color: var(--chalk); line-height: 1.4; }
+
+    .no-crew-msg {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px; text-align: center; gap: 12px;
+    }
+    .no-crew-icon { font-size: 48px; }
+    .no-crew-title { font-size: 20px; font-weight: 700; color: var(--chalk); }
+    .no-crew-sub   { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    .quick-reactions {
+      display: flex;
+      justify-content: space-around;
+      padding: 8px;
+      border-top: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+    .reaction-btn {
+      background: rgba(247,243,238,0.08);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 10px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .reaction-btn:hover { background: rgba(255,107,53,0.15); }
+
+    .compose {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 10px 20px;
+      border-top: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+    .compose-input {
+      flex: 1;
+      background: rgba(247,243,238,0.08);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--chalk);
+      outline: none;
+    }
+    .compose-input:focus { border-color: var(--orange); }
+    .compose-input::placeholder { color: var(--muted); }
+    .send-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--orange);
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Schedule ── */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .filter-chip.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+    }
+    .date-header {
+      padding: 12px 16px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .schedule-game {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--border);
+      cursor: pointer;
+    }
+    .schedule-game:hover { background: var(--card); }
+    .schedule-logos { position: relative; width: 44px; height: 32px; flex-shrink: 0; }
+    .schedule-logo { width: 24px; height: 24px; object-fit: contain; position: absolute; }
+    .schedule-logo.home { bottom: 0; left: 0; }
+    .schedule-logo.away { top: 0; right: 0; }
+    .schedule-info { flex: 1; }
+    .schedule-matchup { font-size: 15px; font-weight: 600; color: var(--chalk); margin-bottom: 3px; }
+    .schedule-status  { font-size: 12px; color: var(--muted); }
+    .schedule-time    { font-size: 13px; color: var(--muted); flex-shrink: 0; }
+
+    /* ── Crews ── */
+    .crew-card {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 0 16px 16px;
+    }
+    .crew-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .crew-card-name  { font-size: 18px; font-weight: 700; color: var(--chalk); }
+    .crew-card-count { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .crew-card-actions { display: flex; gap: 8px; align-items: center; }
+    .invite-btn {
+      border: 1px solid var(--orange);
+      border-radius: 14px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--orange);
+      background: none;
+      cursor: pointer;
+    }
+    .member-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+    .member-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .member-name   { font-size: 14px; color: var(--chalk); flex: 1; }
+    .member-handle { font-size: 11px; color: var(--muted); }
+    .owner-badge {
+      background: rgba(255,107,53,0.15);
+      color: var(--orange);
+      font-size: 11px;
+      border-radius: 8px;
+      padding: 2px 8px;
+    }
+
+    /* ── Profile ── */
+    .profile-header { display: flex; flex-direction: column; align-items: center; padding: 32px 24px 24px; gap: 12px; }
+    .profile-avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 700; color: #fff;
+    }
+    .profile-name     { font-size: 26px; font-weight: 700; color: var(--chalk); }
+    .profile-username { font-size: 16px; color: var(--muted); }
+    .stats-row {
+      display: flex;
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      margin: 0 16px 20px;
+      padding: 20px;
+    }
+    .stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .stat-num  { font-size: 24px; font-weight: 700; color: var(--chalk); }
+    .stat-label{ font-size: 12px; color: var(--muted); }
+    .stat-divider { width: 0.5px; background: var(--border); }
+    .plan-row { display: flex; justify-content: space-between; align-items: center; padding: 0 16px 20px; }
+    .plan-badge {
+      background: rgba(247,243,238,0.08);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--chalk);
+    }
+    .plan-badge.pro      { background: rgba(255,107,53,0.15); border-color: var(--orange); }
+    .plan-badge.lifetime { background: rgba(255,210,63,0.15); border-color: var(--yellow); }
+    .promo-link { font-size: 13px; color: var(--orange); background: none; border: none; cursor: pointer; }
+    .section-list { margin: 0 16px 24px; border-radius: 16px; border: 0.5px solid var(--border); overflow: hidden; }
+    .section-list-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 10px; }
+    .section-list-title  { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    .section-list-action { font-size: 12px; color: var(--orange); background: none; border: none; cursor: pointer; }
+    .list-item { display: flex; align-items: center; padding: 14px 16px; border-bottom: 0.5px solid var(--border); background: var(--card); }
+    .list-item:last-child { border-bottom: none; }
+    .list-item-sport { font-size: 11px; color: var(--orange); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .list-item-name  { font-size: 15px; color: var(--chalk); font-weight: 500; }
+    .list-item-remove { background: rgba(247,243,238,0.08); border: 0.5px solid var(--border); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; cursor: pointer; margin-left: auto; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #1a2535;
+      border-radius: 24px 24px 0 0;
+      padding: 24px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-title { font-size: 20px; font-weight: 700; color: var(--chalk); }
+    .modal-sub   { font-size: 14px; color: var(--muted); }
+    .modal-btns  { display: flex; gap: 10px; margin-top: 4px; }
+    .modal-cancel { flex: 1; padding: 14px; border-radius: 24px; border: 1px solid var(--border); background: none; color: var(--muted); font-size: 15px; cursor: pointer; }
+    .modal-confirm{ flex: 1; padding: 14px; border-radius: 24px; background: var(--orange); border: none; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+    /* ── Utility ── */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 32px; gap: 12px; text-align: center; }
+    .empty-icon  { font-size: 48px; }
+    .empty-title { font-size: 20px; font-weight: 700; color: var(--chalk); }
+    .empty-sub   { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .spinner     { display: flex; align-items: center; justify-content: center; padding: 40px; }
+    .spinner::after { content: ''; width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--orange); animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Desktop sidebar decoration */
+    @media (min-width: 480px) {
+      body { background: #080e14; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ LANDING (logged out) ══════════════════ -->
+<div id="landing">
+  <svg class="landing-logo" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="48" cy="48" r="48" fill="#1B3A6B"/>
+    <circle cx="48" cy="48" r="40" stroke="rgba(255,107,53,0.25)" stroke-width="1.5" fill="none"/>
+    <circle cx="48" cy="48" r="28" stroke="rgba(255,107,53,0.2)" stroke-width="1.5" fill="none"/>
+    <g transform="rotate(-20, 48, 48)">
+      <rect x="32" y="26" width="24" height="5" rx="2.5" fill="#FF6B35"/>
+      <rect x="32" y="26" width="5" height="44" rx="2.5" fill="#FF6B35"/>
+      <rect x="32" y="44" width="18" height="4" rx="2" fill="#FF6B35"/>
+    </g>
+  </svg>
+  <div class="landing-wordmark">fircl</div>
+  <div class="landing-tagline">Your fan circle. Every game.</div>
+  <div class="landing-sub">Private crew chats inside live game threads. Watch with your people, not strangers.</div>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="feature-emoji">👥</span>
+      <div class="feature-title">Private Crews</div>
+      <div class="feature-desc">Your own group inside every game thread</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-emoji">🔴</span>
+      <div class="feature-title">Live Scores</div>
+      <div class="feature-desc">Real-time updates built right in</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-emoji">🏈</span>
+      <div class="feature-title">Multi-Sport</div>
+      <div class="feature-desc">NFL, NBA, MLB, NHL and MLS</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-emoji">🔔</span>
+      <div class="feature-title">Game Alerts</div>
+      <div class="feature-desc">Know the moment your game goes live</div>
+    </div>
+  </div>
+
+  <div class="landing-cta">
+    <button class="btn-primary" onclick="showAuth('signup')">Create account</button>
+    <button class="btn-secondary" onclick="showAuth('login')">Sign in</button>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-top:24px;">
+    <a href="/privacy.html" style="color:var(--muted);">Privacy Policy</a>
+  </p>
+</div>
+
+<!-- ══════════════════ AUTH SCREEN ══════════════════ -->
+<div id="auth-screen">
+  <button class="auth-back" onclick="showLanding()">← Back</button>
+  <div class="auth-title">Welcome to fircl</div>
+  <div class="auth-sub" id="auth-sub">Create your account to get started</div>
+  <div class="auth-tabs">
+    <div class="auth-tab active" id="tab-signup" onclick="switchAuthTab('signup')">Sign up</div>
+    <div class="auth-tab" id="tab-login" onclick="switchAuthTab('login')">Sign in</div>
+  </div>
+
+  <div id="signup-form">
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="signup-email" placeholder="your@email.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input class="form-input" type="text" id="signup-username" placeholder="yourhandle" autocapitalize="none" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="signup-password" placeholder="min 6 characters" />
+    </div>
+    <div id="signup-error" class="form-error"></div>
+    <button class="btn-primary" onclick="handleSignup()" id="signup-btn">Create account</button>
+  </div>
+
+  <div id="login-form" style="display:none;">
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="login-email" placeholder="your@email.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="login-password" placeholder="your password" />
+    </div>
+    <div id="login-error" class="form-error"></div>
+    <button class="btn-primary" onclick="handleLogin()" id="login-btn">Sign in</button>
+  </div>
+</div>
+
+<!-- ══════════════════ APP SHELL ══════════════════ -->
+<div id="shell" style="display:none;">
+
+  <!-- HOME -->
+  <div class="view active" id="view-home">
+    <div class="navbar">
+      <div class="navbar-wordmark">fircl</div>
+      <div style="display:flex;gap:12px;">
+        <button class="navbar-action" title="Notifications">🔔</button>
+      </div>
+    </div>
+    <div class="view-scroll" id="home-scroll">
+      <div id="home-content"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="view" id="view-schedule">
+    <div class="navbar">
+      <div class="navbar-title">Schedule</div>
+    </div>
+    <div class="filter-row" id="schedule-filters"></div>
+    <div class="view-scroll" id="schedule-content"><div class="spinner"></div></div>
+  </div>
+
+  <!-- CREWS -->
+  <div class="view" id="view-crews">
+    <div class="navbar">
+      <div class="navbar-title">My Crew</div>
+      <button class="navbar-action" onclick="openCreateCrew()">+ New Crew</button>
+    </div>
+    <div class="view-scroll" id="crews-content"><div class="spinner"></div></div>
+  </div>
+
+  <!-- EXPLORE -->
+  <div class="view" id="view-explore">
+    <div class="navbar"><div class="navbar-title">Explore</div></div>
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Coming Soon</div>
+      <div class="empty-sub">Explore public game threads and discover fans of your teams.</div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="view" id="view-profile">
+    <div class="navbar">
+      <div class="navbar-title">Profile</div>
+      <button class="navbar-action" onclick="handleSignOut()">Sign out</button>
+    </div>
+    <div class="view-scroll" id="profile-content"><div class="spinner"></div></div>
+  </div>
+
+  <!-- GAME THREAD (overlay) -->
+  <div id="view-game">
+    <div class="navbar" style="flex-shrink:0;">
+      <button class="navbar-action" onclick="closeGame()" style="font-size:28px;line-height:1;">‹</button>
+      <div class="navbar-title">Game Thread</div>
+      <div id="active-crew-pill" style="font-size:12px;color:var(--orange);background:rgba(255,107,53,0.12);border:0.5px solid var(--orange);border-radius:12px;padding:4px 10px;display:none;"></div>
+    </div>
+    <div class="scoreboard" id="scoreboard"></div>
+    <div class="crew-tabs" id="crew-tabs"></div>
+    <div class="messages" id="messages"></div>
+    <div class="quick-reactions" id="quick-reactions">
+      <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
+      <button class="reaction-btn" onclick="sendReaction('😱')">😱</button>
+      <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
+      <button class="reaction-btn" onclick="sendReaction('💀')">💀</button>
+      <button class="reaction-btn" onclick="sendReaction('😭')">😭</button>
+      <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
+    </div>
+    <div class="compose">
+      <input class="compose-input" id="compose-input" placeholder="Message your crew..." />
+      <button class="send-btn" onclick="sendMessage()">▶</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottom-nav" class="visible">
+    <button class="nav-item active" id="nav-home" onclick="switchView('home')">
+      <span class="nav-icon">🏠</span><span>Home</span>
+    </button>
+    <button class="nav-item" id="nav-schedule" onclick="switchView('schedule')">
+      <span class="nav-icon">📅</span><span>Schedule</span>
+    </button>
+    <button class="nav-item" id="nav-crews" onclick="switchView('crews')">
+      <span class="nav-icon">👥</span><span>My Crew</span>
+    </button>
+    <button class="nav-item" id="nav-explore" onclick="switchView('explore')">
+      <span class="nav-icon">🔍</span><span>Explore</span>
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="switchView('profile')">
+      <span class="nav-icon">👤</span><span>Profile</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ══════════════════ MODALS ══════════════════ -->
+
+<!-- Create Crew -->
+<div class="modal-overlay" id="modal-create-crew" onclick="closeModalIfBg(event,'modal-create-crew')">
+  <div class="modal">
+    <div class="modal-title">Create a crew</div>
+    <div class="modal-sub">Give your crew a name — keep it fun!</div>
+    <div id="create-crew-error" class="form-error"></div>
+    <input class="form-input" id="new-crew-name" placeholder="e.g. Bears Nation, Sunday Squad..." />
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-create-crew')">Cancel</button>
+      <button class="modal-confirm" onclick="createCrew()">Create!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite to Crew -->
+<div class="modal-overlay" id="modal-invite" onclick="closeModalIfBg(event,'modal-invite')">
+  <div class="modal">
+    <div class="modal-title" id="invite-modal-title">Invite to crew</div>
+    <div class="modal-sub">Enter their fircl username</div>
+    <div id="invite-error" class="form-error"></div>
+    <div style="display:flex;align-items:center;background:rgba(247,243,238,0.06);border:1px solid var(--border);border-radius:12px;padding:0 14px;">
+      <span style="color:var(--orange);font-size:18px;font-weight:600;margin-right:6px;">@</span>
+      <input class="form-input" id="invite-username" placeholder="username" autocapitalize="none"
+        style="background:none;border:none;padding:14px 0;flex:1;" />
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-invite')">Cancel</button>
+      <button class="modal-confirm" onclick="inviteMember()">Add to crew!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Promo Code -->
+<div class="modal-overlay" id="modal-promo" onclick="closeModalIfBg(event,'modal-promo')">
+  <div class="modal">
+    <div class="modal-title">Redeem a code</div>
+    <div class="modal-sub">Enter your fircl promo or lifetime code</div>
+    <div id="promo-error" class="form-error"></div>
+    <div id="promo-success" class="form-success"></div>
+    <input class="form-input" id="promo-code" placeholder="FIRCL-XXXX-XXX" style="text-transform:uppercase;letter-spacing:1px;" />
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-promo')">Cancel</button>
+      <button class="modal-confirm" onclick="redeemPromo()">Redeem</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://uqfxwvxtudujxrhekngq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZnh3dnh0dWR1anhyaGVrbmdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNDUwODIsImV4cCI6MjA5MzkyMTA4Mn0.VDhZzZl0kkY_o0o0hIToZQ9Yq3dRbjC2CoZXAysAmDA';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const SPORT_NAMES = { 1:'NFL',2:'MLB',3:'NBA',4:'NHL',5:'MLS',6:'College Football',7:'College Basketball',8:'College Baseball',9:'College Softball',10:'Golf',11:'NASCAR',12:'Tennis',13:'WNBA' };
+const AVATAR_COLORS = ['#FF6B35','#1B3A6B','#4ECDC4','#FFD23F'];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let currentUser = null;
+let currentProfile = null;
+let currentGame = null;
+let activeCrew = null;
+let userCrews = [];
+let gameRealtime = null;
+let scheduleFilter = 'All';
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+sb.auth.onAuthStateChange((event, session) => {
+  currentUser = session?.user || null;
+  if (currentUser) {
+    showApp();
+  } else {
+    showLanding();
+  }
+});
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function showLanding() {
+  document.getElementById('landing').classList.add('active');
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('shell').style.display = 'none';
+}
+
+function showAuth(mode) {
+  document.getElementById('landing').classList.remove('active');
+  document.getElementById('auth-screen').classList.add('active');
+  switchAuthTab(mode);
+}
+
+function showLanding() {
+  document.getElementById('landing').classList.add('active');
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('shell').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('landing').classList.remove('active');
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('shell').style.display = 'none';
+  setTimeout(() => {
+    document.getElementById('shell').style.display = 'flex';
+    loadProfile();
+    loadHome();
+    loadCrews();
+  }, 0);
+}
+
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.getElementById('nav-' + view).classList.add('active');
+  if (view === 'schedule') loadSchedule();
+  if (view === 'profile') loadProfile();
+  if (view === 'crews') loadCrews();
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('login-form').style.display  = tab === 'login'  ? 'block' : 'none';
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('auth-sub').textContent = tab === 'signup' ? 'Create your account to get started' : 'Welcome back!';
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function handleSignup() {
+  const email    = document.getElementById('signup-email').value.trim();
+  const username = document.getElementById('signup-username').value.trim().toLowerCase();
+  const password = document.getElementById('signup-password').value;
+  const errEl    = document.getElementById('signup-error');
+  errEl.textContent = '';
+
+  if (!email || !username || !password) { errEl.textContent = 'All fields required'; return; }
+  if (username.length < 3) { errEl.textContent = 'Username must be at least 3 characters'; return; }
+  if (!/^[a-z0-9_]+$/.test(username)) { errEl.textContent = 'Username: letters, numbers and underscores only'; return; }
+
+  const btn = document.getElementById('signup-btn');
+  btn.textContent = '...'; btn.disabled = true;
+
+  // Check username available
+  const { data: existing } = await sb.from('profiles').select('id').eq('username', username).single();
+  if (existing) { errEl.textContent = 'Username taken — try another'; btn.textContent = 'Create account'; btn.disabled = false; return; }
+
+  const { error } = await sb.auth.signUp({ email, password, options: { data: { username } } });
+  if (error) { errEl.textContent = error.message; btn.textContent = 'Create account'; btn.disabled = false; return; }
+
+  // Upsert profile
+  const { data: { user } } = await sb.auth.getUser();
+  if (user) await sb.from('profiles').upsert({ id: user.id, username });
+}
+
+async function handleLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  errEl.textContent = '';
+
+  const btn = document.getElementById('login-btn');
+  btn.textContent = '...'; btn.disabled = true;
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { errEl.textContent = error.message; btn.textContent = 'Sign in'; btn.disabled = false; }
+}
+
+async function handleSignOut() {
+  await sb.auth.signOut();
+}
+
+// ── Home ─────────────────────────────────────────────────────────────────────
+async function loadHome() {
+  if (!currentUser) return;
+  const el = document.getElementById('home-content');
+  el.innerHTML = '<div class="spinner"></div>';
+
+  const { data: userTeams } = await sb.from('user_teams').select('team_id').eq('user_id', currentUser.id);
+  const teamIds = userTeams?.map(t => t.team_id) || [];
+
+  if (teamIds.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚾</div><div class="empty-title">No teams yet!</div><div class="empty-sub">Add your favorite teams from your Profile.</div></div>`;
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const { data: games } = await sb.from('games')
+    .select('*, home_team:teams!games_home_team_id_fkey(id,name,nickname,abbreviation,logo_url,sport_id), away_team:teams!games_away_team_id_fkey(id,name,nickname,abbreviation,logo_url,sport_id)')
+    .or(`home_team_id.in.(${teamIds.join(',')}),away_team_id.in.(${teamIds.join(',')})`)
+    .or('status.eq.live,status.eq.scheduled')
+    .gte('starts_at', new Date(Date.now() - 4*60*60*1000).toISOString())
+    .order('starts_at', { ascending: true });
+
+  const liveGames = (games || []).filter(g => g.status === 'live');
+  const upcomingGames = (games || []).filter(g => g.status !== 'live');
+
+  let html = '';
+
+  if (liveGames.length > 0) {
+    html += `<div class="section-header"><span class="section-title">🔴 Live Now</span></div>`;
+    html += `<div class="games-scroll">` + liveGames.map(g => gameCard(g)).join('') + `</div>`;
+  }
+
+  html += `<div class="section-header"><span class="section-title">Your Threads</span></div>`;
+  if (upcomingGames.length === 0 && liveGames.length === 0) {
+    html += `<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">No games today</div><div class="empty-sub">Check the Schedule for upcoming games.</div></div>`;
+  } else {
+    html += `<div class="thread-list">` + (games || []).map(g => threadItem(g)).join('') + `</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function gameCard(g) {
+  const status = g.status === 'live'
+    ? `<div class="live-badge"><span class="live-dot"></span>LIVE</div>`
+    : `<div class="live-badge upcoming-badge">🕐 ${formatTime(g.starts_at)}</div>`;
+  const homeLogo = g.home_team?.logo_url ? `<img class="game-card-logo" src="${g.home_team.logo_url}" onerror="this.style.display='none'" />` : `<span class="game-card-logo-fallback">${sportEmoji(g.sport_id)}</span>`;
+  const awayLogo = g.away_team?.logo_url ? `<img class="game-card-logo" src="${g.away_team.logo_url}" onerror="this.style.display='none'" />` : `<span class="game-card-logo-fallback">${sportEmoji(g.sport_id)}</span>`;
+  return `<div class="game-card" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+    ${status}
+    <div class="game-card-teams">
+      <div class="game-card-team">${homeLogo}<span class="game-card-abbr">${g.home_team?.abbreviation||'HOM'}</span><span class="game-card-score">${g.home_score||0}</span></div>
+      <span class="game-card-vs">vs</span>
+      <div class="game-card-team">${awayLogo}<span class="game-card-abbr">${g.away_team?.abbreviation||'AWY'}</span><span class="game-card-score">${g.away_score||0}</span></div>
+    </div>
+  </div>`;
+}
+
+function threadItem(g) {
+  const sport = SPORT_NAMES[g.sport_id] || SPORT_NAMES[g.home_team?.sport_id] || 'Sport';
+  const status = g.status === 'live' ? `<span style="color:var(--orange);">● LIVE · ${g.game_clock||''}</span>` : `Thread opens at game time`;
+  const homeLogo = g.home_team?.logo_url ? `<img class="thread-logo home" src="${g.home_team.logo_url}" onerror="this.style.display='none'" />` : `<span class="thread-logo-fallback" style="bottom:0;left:0;">${sportEmoji(g.sport_id)}</span>`;
+  const awayLogo = g.away_team?.logo_url ? `<img class="thread-logo away" src="${g.away_team.logo_url}" onerror="this.style.display='none'" />` : '';
+  return `<div class="thread-item" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+    <div class="thread-logos">${homeLogo}${awayLogo}</div>
+    <div class="thread-info">
+      <div class="thread-title">${g.home_team?.nickname||'Home'} vs ${g.away_team?.nickname||'Away'}<span class="thread-sport-badge">${sport}</span></div>
+      <div class="thread-sub">${status}</div>
+    </div>
+    <div class="thread-time">${formatTime(g.starts_at)}</div>
+  </div>`;
+}
+
+// ── Game Thread ───────────────────────────────────────────────────────────────
+async function openGame(game) {
+  currentGame = game;
+  activeCrew = userCrews.length > 0 ? userCrews[0] : null;
+
+  document.getElementById('view-game').classList.add('active');
+  renderScoreboard(game);
+  renderCrewTabs();
+  await loadMessages();
+  subscribeToGame();
+  subscribeToMessages();
+
+  document.getElementById('compose-input').onkeydown = (e) => {
+    if (e.key === 'Enter') sendMessage();
+  };
+}
+
+function closeGame() {
+  document.getElementById('view-game').classList.remove('active');
+  if (gameRealtime) { sb.removeChannel(gameRealtime); gameRealtime = null; }
+  currentGame = null;
+}
+
+function renderScoreboard(g) {
+  const sport = SPORT_NAMES[g.sport_id] || SPORT_NAMES[g.home_team?.sport_id] || 'Sport';
+  const statusBadge = g.status === 'live'
+    ? `<div class="live-badge"><span class="live-dot"></span>LIVE</div>`
+    : g.status === 'final'
+    ? `<div class="live-badge final-badge">FINAL</div>`
+    : `<div class="live-badge upcoming-badge">🕐 UPCOMING</div>`;
+  const clock = g.status === 'live' ? g.game_clock || '' : g.status === 'final' ? 'Final' : formatTime(g.starts_at);
+  const homeLogo = g.home_team?.logo_url ? `<img class="sb-logo" src="${g.home_team.logo_url}" />` : `<span class="sb-logo-fallback">${sportEmoji(g.sport_id)}</span>`;
+  const awayLogo = g.away_team?.logo_url ? `<img class="sb-logo" src="${g.away_team.logo_url}" />` : `<span class="sb-logo-fallback">${sportEmoji(g.sport_id)}</span>`;
+
+  document.getElementById('scoreboard').innerHTML = `
+    <div class="scoreboard-status">${statusBadge}<span class="scoreboard-clock">${clock}</span></div>
+    <div class="scoreboard-teams">
+      <div class="sb-team">${homeLogo}<span class="sb-name">${g.home_team?.nickname||'Home'}</span><span class="sb-score">${g.home_score||0}</span></div>
+      <span class="sb-vs">vs</span>
+      <div class="sb-team">${awayLogo}<span class="sb-name">${g.away_team?.nickname||'Away'}</span><span class="sb-score">${g.away_score||0}</span></div>
+    </div>
+    <div class="sb-info">${sport} · ${clock}</div>`;
+}
+
+function renderCrewTabs() {
+  const tabs = userCrews.map(c => `
+    <button class="crew-tab ${activeCrew?.id === c.id ? 'active' : ''}" onclick="switchCrew('${c.id}')">
+      <span class="crew-tab-dot"></span>${c.name}<span class="crew-tab-count">${c.members?.length||0}</span>
+    </button>`).join('');
+  document.getElementById('crew-tabs').innerHTML = tabs || '<span style="padding:10px;font-size:13px;color:var(--muted);">No crews yet</span>';
+
+  const pill = document.getElementById('active-crew-pill');
+  if (activeCrew) { pill.textContent = '● ' + activeCrew.name; pill.style.display = 'block'; }
+  else { pill.style.display = 'none'; }
+}
+
+function switchCrew(crewId) {
+  activeCrew = userCrews.find(c => c.id === crewId) || null;
+  renderCrewTabs();
+  loadMessages();
+  subscribeToMessages();
+}
+
+async function loadMessages() {
+  const el = document.getElementById('messages');
+  if (!activeCrew) {
+    el.innerHTML = `<div class="no-crew-msg"><div class="no-crew-icon">👥</div><div class="no-crew-title">No crews yet!</div><div class="no-crew-sub">Create a crew from the My Crew tab and invite your friends.</div></div>`;
+    return;
+  }
+  el.innerHTML = '<div class="spinner"></div>';
+
+  const { data } = await sb.from('messages')
+    .select('*, profiles(username, display_name)')
+    .eq('game_id', currentGame.id)
+    .eq('crew_id', activeCrew.id)
+    .order('created_at', { ascending: true });
+
+  el.innerHTML = '';
+  (data || []).forEach(msg => appendMessage(msg));
+  el.scrollTop = el.scrollHeight;
+}
+
+function appendMessage(msg) {
+  const el = document.getElementById('messages');
+  const name = msg.profiles?.display_name || msg.profiles?.username || 'Fan';
+  const initials = name.slice(0,2).toUpperCase();
+  const color = AVATAR_COLORS[(msg.user_id||'').charCodeAt(0) % AVATAR_COLORS.length];
+  const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : 'now';
+  const div = document.createElement('div');
+  div.className = 'message';
+  div.innerHTML = `<div class="msg-avatar" style="background:${color}">${initials}</div>
+    <div class="msg-body">
+      <div class="msg-header"><span class="msg-user">${name}</span><span class="msg-time">${time}</span></div>
+      <div class="msg-text">${escHtml(msg.content)}</div>
+    </div>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendMessage() {
+  if (!currentUser || !activeCrew || !currentGame) return;
+  const input = document.getElementById('compose-input');
+  const content = input.value.trim();
+  if (!content) return;
+  input.value = '';
+  await sb.from('messages').insert({ content, game_id: currentGame.id, crew_id: activeCrew.id, user_id: currentUser.id });
+}
+
+async function sendReaction(emoji) {
+  if (!currentUser || !activeCrew || !currentGame) return;
+  await sb.from('messages').insert({ content: emoji, game_id: currentGame.id, crew_id: activeCrew.id, user_id: currentUser.id });
+}
+
+function subscribeToGame() {
+  if (gameRealtime) sb.removeChannel(gameRealtime);
+  gameRealtime = sb.channel(`web_game_${currentGame.id}_${Date.now()}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${currentGame.id}` }, payload => {
+      Object.assign(currentGame, payload.new);
+      renderScoreboard(currentGame);
+    })
+    .subscribe();
+}
+
+let msgRealtime = null;
+function subscribeToMessages() {
+  if (msgRealtime) sb.removeChannel(msgRealtime);
+  if (!activeCrew) return;
+  msgRealtime = sb.channel(`web_msgs_${currentGame.id}_${activeCrew.id}_${Date.now()}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `game_id=eq.${currentGame.id}` }, async payload => {
+      const msg = payload.new;
+      if (msg.crew_id !== activeCrew?.id) return;
+      const { data: profile } = await sb.from('profiles').select('username, display_name').eq('id', msg.user_id).single();
+      appendMessage({ ...msg, profiles: profile });
+    })
+    .subscribe();
+}
+
+// ── Schedule ──────────────────────────────────────────────────────────────────
+async function loadSchedule() {
+  if (!currentUser) return;
+  const el = document.getElementById('schedule-content');
+  el.innerHTML = '<div class="spinner"></div>';
+
+  const { data: userTeams } = await sb.from('user_teams').select('team_id').eq('user_id', currentUser.id);
+  const teamIds = userTeams?.map(t => t.team_id) || [];
+  if (teamIds.length === 0) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No teams followed</div><div class="empty-sub">Add teams from your Profile to see their schedule.</div></div>`; return; }
+
+  const now = new Date().toISOString();
+  const future = new Date(Date.now() + 14*24*60*60*1000).toISOString();
+  const { data: games } = await sb.from('games')
+    .select('*, home_team:teams!games_home_team_id_fkey(id,name,nickname,abbreviation,logo_url,sport_id), away_team:teams!games_away_team_id_fkey(id,name,nickname,abbreviation,logo_url,sport_id)')
+    .or(`home_team_id.in.(${teamIds.join(',')}),away_team_id.in.(${teamIds.join(',')})`)
+    .or(`status.eq.live,starts_at.gte.${now}`)
+    .lte('starts_at', future)
+    .order('starts_at', { ascending: true });
+
+  const sports = ['All', ...new Set((games||[]).map(g => SPORT_NAMES[g.sport_id] || SPORT_NAMES[g.home_team?.sport_id]).filter(Boolean))];
+  document.getElementById('schedule-filters').innerHTML = sports.map(s =>
+    `<button class="filter-chip ${scheduleFilter===s?'active':''}" onclick="setScheduleFilter('${s}')">${s}</button>`
+  ).join('');
+
+  renderScheduleGames(games || []);
+}
+
+function setScheduleFilter(sport) {
+  scheduleFilter = sport;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c.textContent === sport));
+  // re-render with filter (re-use last fetch by reloading)
+  loadSchedule();
+}
+
+function renderScheduleGames(games) {
+  const el = document.getElementById('schedule-content');
+  const filtered = scheduleFilter === 'All' ? games : games.filter(g => {
+    const s = SPORT_NAMES[g.sport_id] || SPORT_NAMES[g.home_team?.sport_id];
+    return s === scheduleFilter;
+  });
+
+  if (filtered.length === 0) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No games</div><div class="empty-sub">No upcoming games for this sport.</div></div>`; return; }
+
+  const byDate = {};
+  filtered.forEach(g => {
+    const d = new Date(g.starts_at);
+    const key = d.toDateString();
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(g);
+  });
+
+  let html = '';
+  for (const [dateStr, dayGames] of Object.entries(byDate)) {
+    html += `<div class="date-header">${formatDateHeader(dateStr)}</div>`;
+    dayGames.forEach(g => {
+      const homeLogo = g.home_team?.logo_url ? `<img class="schedule-logo home" src="${g.home_team.logo_url}" />` : `<span class="thread-logo-fallback" style="bottom:0;left:0;font-size:16px;">${sportEmoji(g.sport_id)}</span>`;
+      const awayLogo = g.away_team?.logo_url ? `<img class="schedule-logo away" src="${g.away_team.logo_url}" />` : '';
+      const status = g.status === 'live' ? `<span style="color:var(--orange);">● LIVE · ${g.game_clock||''}</span>` : g.status === 'final' ? 'Final' : 'Thread opens at game time';
+      html += `<div class="schedule-game" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+        <div class="schedule-logos">${homeLogo}${awayLogo}</div>
+        <div class="schedule-info">
+          <div class="schedule-matchup">${g.home_team?.nickname||'Home'} vs ${g.away_team?.nickname||'Away'}</div>
+          <div class="schedule-status">${status}</div>
+        </div>
+        <div class="schedule-time">${formatTime(g.starts_at)}</div>
+      </div>`;
+    });
+  }
+  el.innerHTML = html;
+}
+
+// ── Crews ─────────────────────────────────────────────────────────────────────
+let inviteTargetCrew = null;
+
+async function loadCrews() {
+  if (!currentUser) return;
+  const el = document.getElementById('crews-content');
+  el.innerHTML = '<div class="spinner"></div>';
+
+  const { data } = await sb.from('crew_members')
+    .select('crew_id, crews(id, name, created_by, crew_members(user_id, profiles(username, display_name)))')
+    .eq('user_id', currentUser.id);
+
+  const seen = new Set();
+  userCrews = [];
+  (data || []).forEach(item => {
+    if (seen.has(item.crews.id)) return;
+    seen.add(item.crews.id);
+    userCrews.push({
+      id: item.crews.id,
+      name: item.crews.name,
+      created_by: item.crews.created_by,
+      members: item.crews.crew_members.map(m => ({ user_id: m.user_id, username: m.profiles?.username||'Fan', display_name: m.profiles?.display_name||null }))
+    });
+  });
+
+  if (userCrews.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No crews yet!</div><div class="empty-sub">Create a crew and invite your friends to watch games together.</div></div>`;
+    return;
+  }
+
+  el.innerHTML = '<div style="height:16px;"></div>' + userCrews.map(crew => {
+    const isOwner = crew.created_by === currentUser.id;
+    const members = crew.members.map(m => {
+      const name = m.display_name || m.username;
+      const initials = name.slice(0,2).toUpperCase();
+      const color = AVATAR_COLORS[m.user_id.charCodeAt(0) % AVATAR_COLORS.length];
+      const ownerBadge = m.user_id === crew.created_by ? `<span class="owner-badge">owner</span>` : '';
+      return `<div class="member-row">
+        <div class="member-avatar" style="background:${color}">${initials}</div>
+        <div style="flex:1;"><div class="member-name">${name}</div>${m.display_name ? `<div class="member-handle">@${m.username}</div>` : ''}</div>
+        ${ownerBadge}
+      </div>`;
+    }).join('');
+    return `<div class="crew-card">
+      <div class="crew-card-header">
+        <div><div class="crew-card-name">${crew.name}</div><div class="crew-card-count">${crew.members.length} ${crew.members.length===1?'member':'members'}</div></div>
+        <div class="crew-card-actions">
+          <button class="invite-btn" onclick="openInvite('${crew.id}')">+ Invite</button>
+        </div>
+      </div>
+      <div>${members}</div>
+    </div>`;
+  }).join('');
+}
+
+function openCreateCrew() {
+  document.getElementById('new-crew-name').value = '';
+  document.getElementById('create-crew-error').textContent = '';
+  openModal('modal-create-crew');
+}
+
+async function createCrew() {
+  const name = document.getElementById('new-crew-name').value.trim();
+  if (!name) { document.getElementById('create-crew-error').textContent = 'Please enter a crew name'; return; }
+
+  const { data: crew, error } = await sb.from('crews').insert({ name, created_by: currentUser.id }).select().single();
+  if (error) { document.getElementById('create-crew-error').textContent = error.message; return; }
+  await sb.from('crew_members').insert({ crew_id: crew.id, user_id: currentUser.id });
+  closeModal('modal-create-crew');
+  loadCrews();
+}
+
+function openInvite(crewId) {
+  inviteTargetCrew = userCrews.find(c => c.id === crewId);
+  document.getElementById('invite-modal-title').textContent = `Invite to ${inviteTargetCrew?.name}`;
+  document.getElementById('invite-username').value = '';
+  document.getElementById('invite-error').textContent = '';
+  openModal('modal-invite');
+}
+
+async function inviteMember() {
+  const username = document.getElementById('invite-username').value.trim().toLowerCase();
+  const errEl = document.getElementById('invite-error');
+  if (!username) { errEl.textContent = 'Please enter a username'; return; }
+
+  const { data: profile } = await sb.from('profiles').select('id, username').eq('username', username).single();
+  if (!profile) { errEl.textContent = 'User not found — check the username!'; return; }
+
+  const { data: existing } = await sb.from('crew_members').select('id').eq('crew_id', inviteTargetCrew.id).eq('user_id', profile.id).single();
+  if (existing) { errEl.textContent = 'Already in this crew!'; return; }
+
+  await sb.from('crew_members').insert({ crew_id: inviteTargetCrew.id, user_id: profile.id });
+  closeModal('modal-invite');
+  loadCrews();
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+async function loadProfile() {
+  if (!currentUser) return;
+  const el = document.getElementById('profile-content');
+  el.innerHTML = '<div class="spinner"></div>';
+
+  const SPORT_NAMES_MAP = { 1:'NFL',2:'MLB',3:'NBA',4:'NHL',5:'MLS',6:'College Football',7:'College Basketball',8:'College Baseball',9:'College Softball',10:'Golf',11:'NASCAR',12:'Tennis',13:'WNBA' };
+
+  const [profileRes, teamsRes, crewRes] = await Promise.all([
+    sb.from('profiles').select('*').eq('id', currentUser.id).single(),
+    sb.from('user_teams').select('teams(id, name, nickname, abbreviation, logo_url, sport_id)').eq('user_id', currentUser.id),
+    sb.from('crew_members').select('crew_id', { count: 'exact' }).eq('user_id', currentUser.id),
+  ]);
+
+  currentProfile = profileRes.data;
+  const teams = (teamsRes.data || []).map(ut => ut.teams);
+  const crewCount = crewRes.count || 0;
+  const sports = [...new Set(teams.map(t => SPORT_NAMES_MAP[t.sport_id]).filter(Boolean))];
+
+  const plan = currentProfile?.plan || 'free';
+  const planLabel = plan === 'lifetime' ? '⭐ Lifetime Member' : plan === 'pro' ? '✦ fircl Pro' : 'Free';
+  const planClass = plan === 'lifetime' ? 'lifetime' : plan === 'pro' ? 'pro' : '';
+  const name = currentProfile?.display_name || currentProfile?.username || 'Fan';
+  const initials = name.slice(0,2).toUpperCase();
+  const color = AVATAR_COLORS[(currentProfile?.username||'').charCodeAt(0) % AVATAR_COLORS.length];
+
+  const teamsHtml = teams.length === 0
+    ? `<div class="empty-state" style="padding:24px;"><div class="empty-sub">No teams yet</div></div>`
+    : teams.map(t => `<div class="list-item">
+        <div style="flex:1;"><div class="list-item-sport">${SPORT_NAMES_MAP[t.sport_id]||'Sport'}</div><div class="list-item-name">${t.name}</div></div>
+        <button class="list-item-remove" onclick="removeTeam('${t.id}')">✕</button>
+      </div>`).join('');
+
+  el.innerHTML = `
+    <div class="profile-header">
+      <div class="profile-avatar" style="background:${color}">${initials}</div>
+      ${currentProfile?.display_name ? `<div class="profile-name">${currentProfile.display_name}</div>` : ''}
+      <div class="profile-username">@${currentProfile?.username||''}</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-item"><div class="stat-num">${teams.length}</div><div class="stat-label">Teams</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><div class="stat-num">${sports.length}</div><div class="stat-label">Sports</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><div class="stat-num">${crewCount}</div><div class="stat-label">Crews</div></div>
+    </div>
+    <div class="plan-row">
+      <div class="plan-badge ${planClass}">${planLabel}</div>
+      ${plan === 'free' ? `<button class="promo-link" onclick="openModal('modal-promo')">Have a code?</button>` : ''}
+    </div>
+    <div class="section-list">
+      <div class="section-list-header">
+        <span class="section-list-title">My Teams</span>
+      </div>
+      ${teamsHtml}
+    </div>
+    <div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">
+      <div style="font-size:20px;font-weight:800;color:var(--orange);letter-spacing:2px;margin-bottom:4px;">fircl</div>
+      Your fan circle. Every game.<br>
+      <a href="/privacy.html" style="color:var(--muted);font-size:12px;margin-top:8px;display:inline-block;">Privacy Policy</a>
+    </div>`;
+}
+
+async function removeTeam(teamId) {
+  if (!confirm('Remove this team from your favorites?')) return;
+  await sb.from('user_teams').delete().eq('user_id', currentUser.id).eq('team_id', teamId);
+  loadProfile();
+}
+
+async function redeemPromo() {
+  const code = document.getElementById('promo-code').value.trim().toUpperCase();
+  const errEl = document.getElementById('promo-error');
+  const sucEl = document.getElementById('promo-success');
+  errEl.textContent = ''; sucEl.textContent = '';
+  if (!code) { errEl.textContent = 'Please enter a code'; return; }
+
+  const { data: promo } = await sb.from('promo_codes').select('id, plan_type, is_used').eq('code', code).single();
+  if (!promo) { errEl.textContent = 'Code not found — check and try again'; return; }
+  if (promo.is_used) { errEl.textContent = 'This code has already been used'; return; }
+
+  await sb.from('promo_codes').update({ is_used: true, used_by: currentUser.id, used_at: new Date().toISOString() }).eq('id', promo.id);
+  await sb.from('profiles').update({ plan: promo.plan_type }).eq('id', currentUser.id);
+  sucEl.textContent = `🎉 Welcome to fircl ${promo.plan_type === 'lifetime' ? 'Lifetime' : 'Pro'}!`;
+  setTimeout(() => { closeModal('modal-promo'); loadProfile(); }, 1800);
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModalIfBg(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function sportEmoji(sportId) {
+  const map = { 1:'🏈',2:'⚾',3:'🏀',4:'🏒',5:'⚽' };
+  return map[sportId] || '🏆';
+}
+
+function formatTime(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
+
+function formatDateHeader(dateStr) {
+  const d = new Date(dateStr);
+  const today = new Date();
+  const tomorrow = new Date(); tomorrow.setDate(today.getDate()+1);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+  return d.toLocaleDateString([], { weekday:'long', month:'short', day:'numeric' });
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function avatarColor(str) {
+  return AVATAR_COLORS[(str||'').charCodeAt(0) % AVATAR_COLORS.length];
+}
+</script>
+</body>
+</html>
