@@ -12,6 +12,10 @@
   <meta property="og:description" content="Watch live games with your crew in real-time chat threads." />
   <meta property="og:url" content="https://fircl.app" />
   <meta property="og:image" content="https://fircl.app/og-image.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+  <link rel="apple-touch-icon" href="/favicon-192.png" />
+  <meta property="og:image" content="https://fircl.app/og-image.png" />
   <link rel="manifest" href="/manifest.json" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1095,9 +1099,9 @@ function renderScoreboard(g) {
   document.getElementById('scoreboard').innerHTML = `
     <div class="scoreboard-status">${statusBadge}<span class="scoreboard-clock">${clock}</span></div>
     <div class="scoreboard-teams">
-      <div class="sb-team">${homeLogo}<span class="sb-name">${g.home_team?.nickname||'Home'}</span><span class="sb-score">${g.home_score||0}</span></div>
+      <div class="sb-team">${homeLogo}<span class="sb-name">${escHtml(g.home_team?.nickname||'Home')}</span><span class="sb-score">${g.home_score||0}</span></div>
       <span class="sb-vs">vs</span>
-      <div class="sb-team">${awayLogo}<span class="sb-name">${g.away_team?.nickname||'Away'}</span><span class="sb-score">${g.away_score||0}</span></div>
+      <div class="sb-team">${awayLogo}<span class="sb-name">${escHtml(g.away_team?.nickname||'Away')}</span><span class="sb-score">${g.away_score||0}</span></div>
     </div>
     <div class="sb-info">${sport} · ${clock}</div>`;
 }
@@ -1105,7 +1109,7 @@ function renderScoreboard(g) {
 function renderCrewTabs() {
   const tabs = userCrews.map(c => `
     <button class="crew-tab ${activeCrew?.id === c.id ? 'active' : ''}" onclick="switchCrew('${c.id}')">
-      <span class="crew-tab-dot"></span>${c.name}<span class="crew-tab-count">${c.members?.length||0}</span>
+      <span class="crew-tab-dot"></span>${escHtml(c.name)}<span class="crew-tab-count">${c.members?.length||0}</span>
     </button>`).join('');
   document.getElementById('crew-tabs').innerHTML = tabs || '<span style="padding:10px;font-size:13px;color:var(--muted);">No crews yet</span>';
 
@@ -1143,14 +1147,14 @@ async function loadMessages() {
 function appendMessage(msg) {
   const el = document.getElementById('messages');
   const name = msg.profiles?.display_name || msg.profiles?.username || 'Fan';
-  const initials = name.slice(0,2).toUpperCase();
+  const initials = escHtml(name.slice(0,2).toUpperCase());
   const color = AVATAR_COLORS[(msg.user_id||'').charCodeAt(0) % AVATAR_COLORS.length];
   const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : 'now';
   const div = document.createElement('div');
   div.className = 'message';
   div.innerHTML = `<div class="msg-avatar" style="background:${color}">${initials}</div>
     <div class="msg-body">
-      <div class="msg-header"><span class="msg-user">${name}</span><span class="msg-time">${time}</span></div>
+      <div class="msg-header"><span class="msg-user">${escHtml(name)}</span><span class="msg-time">${escHtml(time)}</span></div>
       <div class="msg-text">${escHtml(msg.content)}</div>
     </div>`;
   el.appendChild(div);
@@ -1300,18 +1304,18 @@ async function loadCrews() {
     const isOwner = crew.created_by === currentUser.id;
     const members = crew.members.map(m => {
       const name = m.display_name || m.username;
-      const initials = name.slice(0,2).toUpperCase();
+      const initials = escHtml(name.slice(0,2).toUpperCase());
       const color = AVATAR_COLORS[m.user_id.charCodeAt(0) % AVATAR_COLORS.length];
       const ownerBadge = m.user_id === crew.created_by ? `<span class="owner-badge">owner</span>` : '';
       return `<div class="member-row">
         <div class="member-avatar" style="background:${color}">${initials}</div>
-        <div style="flex:1;"><div class="member-name">${name}</div>${m.display_name ? `<div class="member-handle">@${m.username}</div>` : ''}</div>
+        <div style="flex:1;"><div class="member-name">${escHtml(name)}</div>${m.display_name ? `<div class="member-handle">@${escHtml(m.username)}</div>` : ''}</div>
         ${ownerBadge}
       </div>`;
     }).join('');
     return `<div class="crew-card">
       <div class="crew-card-header">
-        <div><div class="crew-card-name">${crew.name}</div><div class="crew-card-count">${crew.members.length} ${crew.members.length===1?'member':'members'}</div></div>
+        <div><div class="crew-card-name">${escHtml(crew.name)}</div><div class="crew-card-count">${crew.members.length} ${crew.members.length===1?'member':'members'}</div></div>
         <div class="crew-card-actions">
           <button class="invite-btn" onclick="openInvite('${crew.id}')">+ Invite</button>
         </div>
@@ -1351,13 +1355,31 @@ async function inviteMember() {
   const errEl = document.getElementById('invite-error');
   if (!username) { errEl.textContent = 'Please enter a username'; return; }
 
+  // Check freemium limit — owner's plan determines the cap
+  const { data: ownerProfile } = await sb.from('profiles').select('plan').eq('id', inviteTargetCrew.created_by).single();
+  const ownerPlan = ownerProfile?.plan || 'free';
+  const FREE_MEMBER_LIMIT = 5;
+  if (ownerPlan === 'free' && inviteTargetCrew.members.length >= FREE_MEMBER_LIMIT) {
+    errEl.textContent = `Free crews max out at ${FREE_MEMBER_LIMIT} members. Upgrade to Pro for unlimited!`;
+    return;
+  }
+
   const { data: profile } = await sb.from('profiles').select('id, username').eq('username', username).single();
   if (!profile) { errEl.textContent = 'User not found — check the username!'; return; }
 
   const { data: existing } = await sb.from('crew_members').select('id').eq('crew_id', inviteTargetCrew.id).eq('user_id', profile.id).single();
   if (existing) { errEl.textContent = 'Already in this crew!'; return; }
 
-  await sb.from('crew_members').insert({ crew_id: inviteTargetCrew.id, user_id: profile.id });
+  const { error } = await sb.from('crew_members').insert({ crew_id: inviteTargetCrew.id, user_id: profile.id });
+  if (error) {
+    // DB-level enforcement also blocks this — surface the message cleanly
+    if (error.message?.includes('member limit')) {
+      errEl.textContent = `Free crews max out at ${FREE_MEMBER_LIMIT} members. Upgrade to Pro for unlimited!`;
+    } else {
+      errEl.textContent = 'Something went wrong. Please try again.';
+    }
+    return;
+  }
   closeModal('modal-invite');
   loadCrews();
 }
@@ -1385,21 +1407,21 @@ async function loadProfile() {
   const planLabel = plan === 'lifetime' ? '⭐ Lifetime Member' : plan === 'pro' ? '✦ fircl Pro' : 'Free';
   const planClass = plan === 'lifetime' ? 'lifetime' : plan === 'pro' ? 'pro' : '';
   const name = currentProfile?.display_name || currentProfile?.username || 'Fan';
-  const initials = name.slice(0,2).toUpperCase();
+  const initials = escHtml(name.slice(0,2).toUpperCase());
   const color = AVATAR_COLORS[(currentProfile?.username||'').charCodeAt(0) % AVATAR_COLORS.length];
 
   const teamsHtml = teams.length === 0
     ? `<div class="empty-state" style="padding:24px;"><div class="empty-sub">No teams yet</div></div>`
     : teams.map(t => `<div class="list-item">
-        <div style="flex:1;"><div class="list-item-sport">${SPORT_NAMES_MAP[t.sport_id]||'Sport'}</div><div class="list-item-name">${t.name}</div></div>
+        <div style="flex:1;"><div class="list-item-sport">${escHtml(SPORT_NAMES_MAP[t.sport_id]||'Sport')}</div><div class="list-item-name">${escHtml(t.name)}</div></div>
         <button class="list-item-remove" onclick="removeTeam('${t.id}')">✕</button>
       </div>`).join('');
 
   el.innerHTML = `
     <div class="profile-header">
       <div class="profile-avatar" style="background:${color}">${initials}</div>
-      ${currentProfile?.display_name ? `<div class="profile-name">${currentProfile.display_name}</div>` : ''}
-      <div class="profile-username">@${currentProfile?.username||''}</div>
+      ${currentProfile?.display_name ? `<div class="profile-name">${escHtml(currentProfile.display_name)}</div>` : ''}
+      <div class="profile-username">@${escHtml(currentProfile?.username||'')}</div>
     </div>
     <div class="stats-row">
       <div class="stat-item"><div class="stat-num">${teams.length}</div><div class="stat-label">Teams</div></div>
