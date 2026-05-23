@@ -255,6 +255,19 @@
       flex-shrink: 0;
     }
     .game-card:hover { border-color: rgba(255,107,53,0.4); }
+    .game-card.golf-card { min-width: 190px; }
+    .golf-tournament-name { font-size: 12px; font-weight: 600; color: var(--chalk); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .golf-leader-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+    .golf-pos   { font-size: 11px; color: var(--muted); width: 16px; }
+    .golf-name  { font-size: 12px; color: var(--chalk); flex: 1; }
+    .golf-score { font-size: 12px; font-weight: 700; color: var(--orange); }
+    /* Tennis cards (same wide layout as golf) */
+    .game-card.tennis-card { min-width: 190px; }
+    .tennis-match-row { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+    .tennis-round-label { font-size: 10px; color: var(--muted); width: 26px; flex-shrink: 0; }
+    .tennis-player-name { font-size: 12px; color: var(--chalk); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tennis-player-name.winner { color: var(--orange); font-weight: 700; }
+    .tennis-d { font-size: 10px; color: var(--muted); width: 10px; text-align: center; }
     .game-card-time { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
     .game-card-teams { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .game-card-team { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
@@ -335,6 +348,29 @@
     .sb-score { font-size: 36px; font-weight: 700; color: #fff; }
     .sb-vs    { font-size: 16px; color: #555; }
     .sb-info  { font-size: 11px; color: #aaa; text-align: center; margin-top: 6px; }
+    .sb-tournament { font-size: 15px; font-weight: 600; color: var(--chalk); text-align: center; margin-bottom: 10px; }
+    .leaderboard-table { width: 100%; }
+    .lb-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+    .lb-row:nth-child(even) { background: rgba(255,255,255,0.03); }
+    .lb-pos   { font-size: 12px; color: var(--muted); width: 28px; text-align: center; }
+    .lb-name  { font-size: 13px; color: var(--chalk); flex: 1; }
+    .lb-thru  { font-size: 11px; color: var(--muted); width: 30px; text-align: center; }
+    .lb-score { font-size: 13px; font-weight: 700; width: 36px; text-align: right; }
+    .lb-score.under { color: #5c5; }
+    .lb-score.over  { color: #e55; }
+    .lb-score.even  { color: var(--muted); }
+
+    /* Tennis match list in scoreboard */
+    .match-table { width: 100%; max-height: 200px; overflow-y: auto; }
+    .match-row { padding: 7px 10px; border-bottom: 0.5px solid var(--border); }
+    .match-round { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 4px; }
+    .match-players { display: flex; flex-direction: column; gap: 2px; }
+    .match-player { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--chalk); }
+    .match-player.winner { color: var(--orange); font-weight: 700; }
+    .match-player.live-player { color: var(--teal, #4ECDC4); }
+    .match-score { font-size: 12px; color: var(--muted); margin-left: 8px; }
+    .match-score.won { color: var(--orange); font-weight: 700; }
+    .match-vs { font-size: 10px; color: var(--muted); text-align: center; padding: 1px 0; }
 
     .crew-tabs {
       display: flex;
@@ -624,6 +660,61 @@
     .spinner::after { content: ''; width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--orange); animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Team Picker ── */
+    #team-picker {
+      position: absolute;
+      inset: 0;
+      background: var(--night);
+      z-index: 150;
+      display: none;
+      flex-direction: column;
+    }
+    #team-picker.active { display: flex; }
+    .picker-sports {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .picker-sports::-webkit-scrollbar { display: none; }
+    .picker-sport-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .picker-sport-chip.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .picker-teams { flex: 1; overflow-y: auto; padding: 0; }
+    .picker-team-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .picker-team-row:hover { background: var(--card); }
+    .picker-team-logo { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
+    .picker-team-name { flex: 1; font-size: 15px; color: var(--chalk); }
+    .picker-check {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0; transition: all 0.15s;
+    }
+    .picker-check.on { background: var(--orange); border-color: var(--orange); color: #fff; }
+
     /* Desktop sidebar decoration */
     @media (min-width: 480px) {
       body { background: #080e14; }
@@ -851,6 +942,17 @@
     </div>
   </div>
 
+  <!-- TEAM PICKER (overlay) -->
+  <div id="team-picker">
+    <div class="navbar" style="flex-shrink:0;">
+      <button class="navbar-action" onclick="closeTeamPicker()" style="font-size:28px;line-height:1;">‹</button>
+      <div class="navbar-title">Follow Teams</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="picker-sports" id="picker-sports"></div>
+    <div class="picker-teams" id="picker-teams"><div class="spinner"></div></div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <nav id="bottom-nav" class="visible">
     <button class="nav-item active" id="nav-home" onclick="switchView('home')">
@@ -927,8 +1029,13 @@ const SUPABASE_URL  = 'https://uqfxwvxtudujxrhekngq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZnh3dnh0dWR1anhyaGVrbmdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNDUwODIsImV4cCI6MjA5MzkyMTA4Mn0.VDhZzZl0kkY_o0o0hIToZQ9Yq3dRbjC2CoZXAysAmDA';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-const SPORT_NAMES = { 1:'NFL',2:'MLB',3:'NBA',4:'NHL',5:'MLS',6:'College Football',7:'College Basketball',8:'College Baseball',9:'College Softball',10:'Golf',11:'NASCAR',12:'Tennis',13:'WNBA' };
+const SPORT_NAMES = { 1:'NFL',2:'MLB',3:'NBA',4:'NHL',5:'MLS',6:'College Football',7:'College Basketball',8:'College Baseball',9:'College Softball',10:'Golf',11:'NASCAR',12:'Tennis',13:'WNBA',14:'PGA Tour',15:'LIV Golf',16:'ATP Tennis',17:'WTA Tennis' };
 const AVATAR_COLORS = ['#FF6B35','#1B3A6B','#4ECDC4','#FFD23F'];
+const LEADERBOARD_SPORT_IDS = new Set([14, 15]);
+const TENNIS_SPORT_IDS = new Set([16, 17]);
+function isLeaderboardGame(g) { return LEADERBOARD_SPORT_IDS.has(g.sport_id); }
+function isTennisGame(g) { return TENNIS_SPORT_IDS.has(g.sport_id); }
+function isTournamentGame(g) { return isLeaderboardGame(g) || isTennisGame(g); }
 
 // ── State ────────────────────────────────────────────────────────────────────
 let currentUser = null;
@@ -1052,7 +1159,7 @@ async function loadHome() {
   const teamIds = userTeams?.map(t => t.team_id) || [];
 
   if (teamIds.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚾</div><div class="empty-title">No teams yet!</div><div class="empty-sub">Add your favorite teams from your Profile.</div></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚾</div><div class="empty-title">No teams yet!</div><div class="empty-sub">Follow your favorite teams to see their games here.</div><button class="btn-primary" style="margin-top:16px;max-width:240px;" onclick="openTeamPicker()">Follow teams</button></div>`;
     return;
   }
 
@@ -1064,8 +1171,43 @@ async function loadHome() {
     .gte('starts_at', new Date(Date.now() - 4*60*60*1000).toISOString())
     .order('starts_at', { ascending: true });
 
-  const liveGames = (games || []).filter(g => g.status === 'live');
-  const upcomingGames = (games || []).filter(g => g.status !== 'live');
+  // Batch-fetch top-3 leaderboard for any golf games
+  const golfIds = (games || []).filter(g => isLeaderboardGame(g)).map(g => g.id);
+  const leaderboardByGame = {};
+  if (golfIds.length > 0) {
+    const { data: lb } = await sb.from('event_leaderboard')
+      .select('game_id, position, player_name, score_display')
+      .in('game_id', golfIds)
+      .lte('position', 3)
+      .order('position', { ascending: true });
+    (lb || []).forEach(row => {
+      if (!leaderboardByGame[row.game_id]) leaderboardByGame[row.game_id] = [];
+      leaderboardByGame[row.game_id].push(row);
+    });
+  }
+
+  // Batch-fetch top-3 matches for any tennis tournaments
+  const tennisIds = (games || []).filter(g => isTennisGame(g)).map(g => g.id);
+  const matchesByGame = {};
+  if (tennisIds.length > 0) {
+    const { data: matchRows } = await sb.from('event_matches')
+      .select('game_id, round, match_order, player1_name, player2_name, score_display, status, winner')
+      .in('game_id', tennisIds)
+      .order('match_order', { ascending: true });
+    (matchRows || []).forEach(row => {
+      if (!matchesByGame[row.game_id]) matchesByGame[row.game_id] = [];
+      if (matchesByGame[row.game_id].length < 3) matchesByGame[row.game_id].push(row);
+    });
+  }
+
+  const allGames = (games || []).map(g => ({
+    ...g,
+    leaderboard: leaderboardByGame[g.id] || [],
+    matches: matchesByGame[g.id] || [],
+  }));
+
+  const liveGames = allGames.filter(g => g.status === 'live');
+  const upcomingGames = allGames.filter(g => g.status !== 'live');
 
   let html = '';
 
@@ -1078,20 +1220,53 @@ async function loadHome() {
   if (upcomingGames.length === 0 && liveGames.length === 0) {
     html += `<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">No games today</div><div class="empty-sub">Check the Schedule for upcoming games.</div></div>`;
   } else {
-    html += `<div class="thread-list">` + (games || []).map(g => threadItem(g)).join('') + `</div>`;
+    html += `<div class="thread-list">` + allGames.map(g => threadItem(g)).join('') + `</div>`;
   }
 
   el.innerHTML = html;
 }
 
 function gameCard(g) {
-  const status = g.status === 'live'
+  const statusBadge = g.status === 'live'
     ? `<div class="live-badge"><span class="live-dot"></span>LIVE</div>`
     : `<div class="live-badge upcoming-badge">🕐 ${formatTime(g.starts_at)}</div>`;
+
+  if (isLeaderboardGame(g)) {
+    const leaders = (g.leaderboard || []).map(e =>
+      `<div class="golf-leader-row">
+        <span class="golf-pos">${e.position}.</span>
+        <span class="golf-name">${escHtml(e.player_name.split(' ').pop())}</span>
+        <span class="golf-score">${escHtml(e.score_display||'-')}</span>
+      </div>`).join('') || '<div style="font-size:12px;color:var(--muted);margin-top:4px;">Leaderboard TBD</div>';
+    return `<div class="game-card golf-card" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+      ${statusBadge}
+      <div class="golf-tournament-name">${sportEmoji(g.sport_id)} ${escHtml(g.home_team?.name||'Tournament')}</div>
+      ${leaders}
+    </div>`;
+  }
+
+  if (isTennisGame(g)) {
+    const shortRound = r => (r||'').replace('Quarterfinal','QF').replace('Semifinal','SF').replace('Final','F');
+    const matchRows = (g.matches || []).map(m => {
+      const p1Won = m.winner === 1, p2Won = m.winner === 2;
+      return `<div class="tennis-match-row">
+        <span class="tennis-round-label">${shortRound(m.round)}</span>
+        <span class="tennis-player-name${p1Won?' winner':''}">${escHtml((m.player1_name||'').split(' ').pop())}</span>
+        <span class="tennis-d">d.</span>
+        <span class="tennis-player-name${p2Won?' winner':''}">${escHtml((m.player2_name||'').split(' ').pop())}</span>
+      </div>`;
+    }).join('') || '<div style="font-size:12px;color:var(--muted);margin-top:4px;">Draw TBD</div>';
+    return `<div class="game-card tennis-card" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+      ${statusBadge}
+      <div class="golf-tournament-name">${sportEmoji(g.sport_id)} ${escHtml(g.home_team?.name||'Tournament')}</div>
+      ${matchRows}
+    </div>`;
+  }
+
   const homeLogo = g.home_team?.logo_url ? `<img class="game-card-logo" src="${g.home_team.logo_url}" onerror="this.style.display='none'" />` : `<span class="game-card-logo-fallback">${sportEmoji(g.sport_id)}</span>`;
   const awayLogo = g.away_team?.logo_url ? `<img class="game-card-logo" src="${g.away_team.logo_url}" onerror="this.style.display='none'" />` : `<span class="game-card-logo-fallback">${sportEmoji(g.sport_id)}</span>`;
   return `<div class="game-card" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
-    ${status}
+    ${statusBadge}
     <div class="game-card-teams">
       <div class="game-card-team">${homeLogo}<span class="game-card-abbr">${g.home_team?.abbreviation||'HOM'}</span><span class="game-card-score">${g.home_score||0}</span></div>
       <span class="game-card-vs">vs</span>
@@ -1102,6 +1277,39 @@ function gameCard(g) {
 
 function threadItem(g) {
   const sport = SPORT_NAMES[g.sport_id] || SPORT_NAMES[g.home_team?.sport_id] || 'Sport';
+
+  if (isLeaderboardGame(g)) {
+    const topLeader = g.leaderboard?.[0];
+    const preview = topLeader
+      ? `Lead: ${topLeader.player_name.split(' ').pop()} ${topLeader.score_display}`
+      : 'Leaderboard TBD';
+    const liveStatus = g.status === 'live' ? `<span style="color:var(--orange);">● LIVE</span> · ` : '';
+    return `<div class="thread-item" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+      <div class="thread-logos"><span class="thread-logo-fallback" style="bottom:0;left:0;">${sportEmoji(g.sport_id)}</span></div>
+      <div class="thread-info">
+        <div class="thread-title">${escHtml(g.home_team?.name||'Tournament')}<span class="thread-sport-badge">${sport}</span></div>
+        <div class="thread-sub">${liveStatus}${escHtml(preview)}</div>
+      </div>
+      <div class="thread-time">${formatTime(g.starts_at)}</div>
+    </div>`;
+  }
+
+  if (isTennisGame(g)) {
+    const topMatch = g.matches?.[0];
+    const preview = topMatch
+      ? `${topMatch.round||''}: ${(topMatch.player1_name||'').split(' ').pop()} vs ${(topMatch.player2_name||'').split(' ').pop()}`
+      : 'Draw TBD';
+    const liveStatus = g.status === 'live' ? `<span style="color:var(--orange);">● LIVE</span> · ` : '';
+    return `<div class="thread-item" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+      <div class="thread-logos"><span class="thread-logo-fallback" style="bottom:0;left:0;">${sportEmoji(g.sport_id)}</span></div>
+      <div class="thread-info">
+        <div class="thread-title">${escHtml(g.home_team?.name||'Tournament')}<span class="thread-sport-badge">${sport}</span></div>
+        <div class="thread-sub">${liveStatus}${escHtml(preview)}</div>
+      </div>
+      <div class="thread-time">${formatTime(g.starts_at)}</div>
+    </div>`;
+  }
+
   const status = g.status === 'live' ? `<span style="color:var(--orange);">● LIVE · ${g.game_clock||''}</span>` : `Thread opens at game time`;
   const homeLogo = g.home_team?.logo_url ? `<img class="thread-logo home" src="${g.home_team.logo_url}" onerror="this.style.display='none'" />` : `<span class="thread-logo-fallback" style="bottom:0;left:0;">${sportEmoji(g.sport_id)}</span>`;
   const awayLogo = g.away_team?.logo_url ? `<img class="thread-logo away" src="${g.away_team.logo_url}" onerror="this.style.display='none'" />` : '';
@@ -1121,7 +1329,26 @@ async function openGame(game) {
   activeCrew = userCrews.length > 0 ? userCrews[0] : null;
 
   document.getElementById('view-game').classList.add('active');
-  renderScoreboard(game);
+
+  // For golf, fetch full leaderboard
+  if (isLeaderboardGame(game)) {
+    const { data: lb } = await sb.from('event_leaderboard')
+      .select('position, position_display, player_name, score_display, thru')
+      .eq('game_id', game.id)
+      .order('position', { ascending: true });
+    currentGame.fullLeaderboard = lb || [];
+  }
+
+  // For tennis, fetch all matches
+  if (isTennisGame(game)) {
+    const { data: mRows } = await sb.from('event_matches')
+      .select('round, match_order, player1_name, player1_seed, player2_name, player2_seed, score_display, status, winner')
+      .eq('game_id', game.id)
+      .order('match_order', { ascending: true });
+    currentGame.fullMatches = mRows || [];
+  }
+
+  renderScoreboard(currentGame);
   renderCrewTabs();
   await loadMessages();
   subscribeToGame();
@@ -1146,6 +1373,51 @@ function renderScoreboard(g) {
     ? `<div class="live-badge final-badge">FINAL</div>`
     : `<div class="live-badge upcoming-badge">🕐 UPCOMING</div>`;
   const clock = g.status === 'live' ? g.game_clock || '' : g.status === 'final' ? 'Final' : formatTime(g.starts_at);
+
+  if (isLeaderboardGame(g)) {
+    const rows = (g.fullLeaderboard || []).map(e => {
+      const scoreClass = (e.score_display||'').startsWith('-') ? 'under' : e.score_display === 'E' ? 'even' : 'over';
+      return `<div class="lb-row">
+        <span class="lb-pos">${escHtml(e.position_display||String(e.position))}</span>
+        <span class="lb-name">${escHtml(e.player_name)}</span>
+        <span class="lb-thru">${escHtml(e.thru||'')}</span>
+        <span class="lb-score ${scoreClass}">${escHtml(e.score_display||'-')}</span>
+      </div>`;
+    }).join('') || '<div style="padding:12px;text-align:center;color:var(--muted);font-size:13px;">Leaderboard not available</div>';
+
+    document.getElementById('scoreboard').innerHTML = `
+      <div class="scoreboard-status">${statusBadge}<span class="scoreboard-clock">${sport}</span></div>
+      <div class="sb-tournament">${escHtml(g.home_team?.name||'Tournament')}</div>
+      <div class="leaderboard-table">${rows}</div>`;
+    return;
+  }
+
+  if (isTennisGame(g)) {
+    const reverseScore = s => (s||'').split(', ').map(set => { const [a,b] = set.split('-'); return `${b||0}-${a||0}`; }).join(', ');
+    const matchRows = (g.fullMatches || []).map(m => {
+      const p1Won = m.winner === 1, p2Won = m.winner === 2;
+      const isLive = m.status === 'live';
+      const p1Score = p1Won ? m.score_display || '' : (p2Won ? reverseScore(m.score_display) : '');
+      const p2Score = p2Won ? m.score_display || '' : (p1Won ? reverseScore(m.score_display) : '');
+      const p1Seed = m.player1_seed ? `<sup style="font-size:10px;color:var(--muted);">[${m.player1_seed}]</sup> ` : '';
+      const p2Seed = m.player2_seed ? `<sup style="font-size:10px;color:var(--muted);">[${m.player2_seed}]</sup> ` : '';
+      return `<div class="match-row">
+        <div class="match-round">${escHtml(m.round||'')}</div>
+        <div class="match-players">
+          <div class="match-player${p1Won?' winner':''}${isLive?' live-player':''}">${p1Seed}${escHtml(m.player1_name||'')}<span class="match-score${p1Won?' won':''}">${escHtml(p1Score)}</span></div>
+          <div class="match-vs">vs</div>
+          <div class="match-player${p2Won?' winner':''}${isLive?' live-player':''}">${p2Seed}${escHtml(m.player2_name||'')}<span class="match-score${p2Won?' won':''}">${escHtml(p2Score)}</span></div>
+        </div>
+      </div>`;
+    }).join('') || '<div style="padding:12px;text-align:center;color:var(--muted);font-size:13px;">Draw not yet available</div>';
+
+    document.getElementById('scoreboard').innerHTML = `
+      <div class="scoreboard-status">${statusBadge}<span class="scoreboard-clock">${sport}</span></div>
+      <div class="sb-tournament">${escHtml(g.home_team?.name||'Tournament')}</div>
+      <div class="match-table">${matchRows}</div>`;
+    return;
+  }
+
   const homeLogo = g.home_team?.logo_url ? `<img class="sb-logo" src="${g.home_team.logo_url}" />` : `<span class="sb-logo-fallback">${sportEmoji(g.sport_id)}</span>`;
   const awayLogo = g.away_team?.logo_url ? `<img class="sb-logo" src="${g.away_team.logo_url}" />` : `<span class="sb-logo-fallback">${sportEmoji(g.sport_id)}</span>`;
 
@@ -1307,13 +1579,17 @@ function renderScheduleGames(games) {
   for (const [dateStr, dayGames] of Object.entries(byDate)) {
     html += `<div class="date-header">${formatDateHeader(dateStr)}</div>`;
     dayGames.forEach(g => {
+      const isTournament = isTournamentGame(g);
       const homeLogo = g.home_team?.logo_url ? `<img class="schedule-logo home" src="${g.home_team.logo_url}" />` : `<span class="thread-logo-fallback" style="bottom:0;left:0;font-size:16px;">${sportEmoji(g.sport_id)}</span>`;
-      const awayLogo = g.away_team?.logo_url ? `<img class="schedule-logo away" src="${g.away_team.logo_url}" />` : '';
+      const awayLogo = (!isTournament && g.away_team?.logo_url) ? `<img class="schedule-logo away" src="${g.away_team.logo_url}" />` : '';
+      const matchup = isTournament
+        ? escHtml(g.home_team?.name || 'Tournament')
+        : `${escHtml(g.home_team?.nickname||'Home')} vs ${escHtml(g.away_team?.nickname||'Away')}`;
       const status = g.status === 'live' ? `<span style="color:var(--orange);">● LIVE · ${g.game_clock||''}</span>` : g.status === 'final' ? 'Final' : 'Thread opens at game time';
       html += `<div class="schedule-game" onclick="openGame(${JSON.stringify(g).replace(/"/g,'&quot;')})">
         <div class="schedule-logos">${homeLogo}${awayLogo}</div>
         <div class="schedule-info">
-          <div class="schedule-matchup">${g.home_team?.nickname||'Home'} vs ${g.away_team?.nickname||'Away'}</div>
+          <div class="schedule-matchup">${matchup}</div>
           <div class="schedule-status">${status}</div>
         </div>
         <div class="schedule-time">${formatTime(g.starts_at)}</div>
@@ -1490,6 +1766,7 @@ async function loadProfile() {
     <div class="section-list">
       <div class="section-list-header">
         <span class="section-list-title">My Teams</span>
+        <button class="section-list-action" onclick="openTeamPicker()">+ Add</button>
       </div>
       ${teamsHtml}
     </div>
@@ -1530,7 +1807,7 @@ function closeModalIfBg(e, id) { if (e.target === e.currentTarget) closeModal(id
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function sportEmoji(sportId) {
-  const map = { 1:'🏈',2:'⚾',3:'🏀',4:'🏒',5:'⚽' };
+  const map = { 1:'🏈',2:'⚾',3:'🏀',4:'🏒',5:'⚽',14:'🏌️',15:'🏌️',16:'🎾',17:'🎾' };
   return map[sportId] || '🏆';
 }
 
@@ -1554,6 +1831,89 @@ function escHtml(str) {
 
 function avatarColor(str) {
   return AVATAR_COLORS[(str||'').charCodeAt(0) % AVATAR_COLORS.length];
+}
+
+// ── Team Picker ───────────────────────────────────────────────────────────────
+let pickerFollowedIds = new Set();
+let pickerActiveSportId = null;
+
+async function openTeamPicker() {
+  document.getElementById('team-picker').classList.add('active');
+
+  // Load currently followed team IDs
+  const { data: userTeams } = await sb.from('user_teams').select('team_id').eq('user_id', currentUser.id);
+  pickerFollowedIds = new Set((userTeams || []).map(ut => ut.team_id));
+
+  // Load all sports
+  const { data: sports } = await sb.from('sports').select('id, name').order('id');
+  const sportsEl = document.getElementById('picker-sports');
+  sportsEl.innerHTML = (sports || []).map((s, i) =>
+    `<button class="picker-sport-chip ${i === 0 ? 'active' : ''}"
+      onclick="selectPickerSport(${s.id})"
+      id="picker-sport-${s.id}">${escHtml(s.name)}</button>`
+  ).join('');
+
+  if (sports && sports.length > 0) {
+    pickerActiveSportId = sports[0].id;
+    await loadPickerTeams(sports[0].id);
+  }
+}
+
+async function selectPickerSport(sportId) {
+  pickerActiveSportId = sportId;
+  document.querySelectorAll('.picker-sport-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById(`picker-sport-${sportId}`).classList.add('active');
+  await loadPickerTeams(sportId);
+}
+
+async function loadPickerTeams(sportId) {
+  const el = document.getElementById('picker-teams');
+  el.innerHTML = '<div class="spinner"></div>';
+
+  const { data: teams } = await sb.from('teams')
+    .select('id, name, nickname, abbreviation, logo_url')
+    .eq('sport_id', sportId)
+    .order('name');
+
+  if (!teams || teams.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-sub">No teams for this sport yet.</div></div>';
+    return;
+  }
+
+  el.innerHTML = teams.map(t => {
+    const followed = pickerFollowedIds.has(t.id);
+    const logo = t.logo_url
+      ? `<img class="picker-team-logo" src="${t.logo_url}" onerror="this.style.display='none'" />`
+      : `<span style="width:32px;text-align:center;font-size:22px;flex-shrink:0;">${sportEmoji(sportId)}</span>`;
+    return `<div class="picker-team-row" onclick="togglePickerTeam(${t.id})">
+      ${logo}
+      <span class="picker-team-name">${escHtml(t.name)}</span>
+      <div class="picker-check ${followed ? 'on' : ''}" id="picker-check-${t.id}">${followed ? '✓' : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+async function togglePickerTeam(teamId) {
+  const checkEl = document.getElementById(`picker-check-${teamId}`);
+  const isFollowed = pickerFollowedIds.has(teamId);
+
+  if (isFollowed) {
+    await sb.from('user_teams').delete().eq('user_id', currentUser.id).eq('team_id', teamId);
+    pickerFollowedIds.delete(teamId);
+    checkEl.classList.remove('on');
+    checkEl.textContent = '';
+  } else {
+    await sb.from('user_teams').insert({ user_id: currentUser.id, team_id: teamId });
+    pickerFollowedIds.add(teamId);
+    checkEl.classList.add('on');
+    checkEl.textContent = '✓';
+  }
+}
+
+function closeTeamPicker() {
+  document.getElementById('team-picker').classList.remove('active');
+  loadHome();
+  loadProfile();
 }
 </script>
 </body>
